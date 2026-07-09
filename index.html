@@ -11,7 +11,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GeoWay 1.1</title>
+<title>GeoWay 1.2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -31,8 +31,15 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 #map-wrap{flex:1;position:relative}
 #map{width:100%;height:100%}
 
-/* FLIGHT INFO CARD — top left */
-#info-card{position:absolute;top:10px;left:10px;z-index:900;background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:8px;padding:10px 13px;display:none;min-width:190px}
+/* FLIGHT INFO CARD + LEGEND GROUP — top left */
+#ic-wrap{position:absolute;top:10px;left:10px;z-index:900}
+#ic-scroll{display:flex;flex-direction:column;gap:8px;max-width:calc(100vw - 40px);overflow-y:auto}
+#ic-scroll::-webkit-scrollbar{width:3px}
+#ic-scroll::-webkit-scrollbar-thumb{background:#30363d}
+#ic-wrap-toggle{position:absolute;top:-12px;right:-12px;width:26px;height:26px;border-radius:50%;background:#1e2433;border:1px solid #30363d;color:#c9d1d9;font-size:13px;cursor:pointer;z-index:901;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+#ic-wrap-toggle:hover{background:#2d333d}
+#ic-wrap.ic-collapsed #ic-scroll{display:none}
+#info-card{background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:8px;padding:10px 13px;display:none;min-width:190px}
 .ic-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7d8590;margin-bottom:8px}
 .ic-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
 .ic-item .ik{font-size:10px;color:#8b949e}
@@ -61,6 +68,10 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 #elev-src{font-size:10px;color:#8b949e;margin-left:8px}
 #elev-close{background:transparent;border:none;color:#8b949e;font-size:16px;cursor:pointer;padding:0 4px;line-height:1}
 #elev-close:hover{color:#f85149}
+#elev-handle{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:36px;height:20px;border-radius:6px 6px 0 0;background:#1e2433;border:1px solid #30363d;border-bottom:none;color:#c9d1d9;font-size:11px;line-height:1;cursor:pointer;z-index:851;display:flex;align-items:center;justify-content:center;box-shadow:0 -2px 6px rgba(0,0,0,.35)}
+#elev-handle:hover{background:#2d333d}
+#elev-panel.elev-collapsed{padding-top:0;padding-bottom:0}
+#elev-panel.elev-collapsed>#elev-hdr,#elev-panel.elev-collapsed>#elev-wrap{display:none}
 #elev-wrap{position:relative}
 #elev-cv{width:100%;display:block;cursor:crosshair}
 #elev-vline{position:absolute;top:0;bottom:0;width:1px;background:#f9e2af;opacity:0;pointer-events:none}
@@ -158,11 +169,64 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 .t-sep{border-top:1px solid #21262d;margin:4px 0 2px}
 .t-total .t-lbl{font-size:11px;color:#c9d1d9;font-weight:600}
 .t-total .t-val{font-size:13px;color:#58a6ff;font-weight:700}
+
+/* ─────────────────── RESPONSIVO / MOBILE ───────────────────
+   Regras aditivas. Nada aqui altera o layout desktop: o botão da
+   gaveta e o backdrop ficam ocultos por padrão e só o bloco @media
+   (≤768px) transforma o painel lateral em gaveta deslizante. */
+#drawer-toggle{display:none;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:17px;line-height:1;cursor:pointer;padding:0}
+#drawer-toggle:hover{background:#2d333d}
+#drawer-backdrop{display:none}
+
+@media (max-width:768px){
+  /* Header compacto + botão da gaveta visível */
+  #hdr{padding:0 8px;gap:6px}
+  .logo-s{display:none}
+  .hdr-lbl{display:none}
+  .hdr-r{gap:6px}
+  .hdr-sel{max-width:150px;font-size:12px;padding:4px 6px}
+  #custom-edit-link{display:none!important}
+  #drawer-toggle{display:flex}
+
+  /* O mapa ocupa toda a largura; #side vira gaveta à direita.
+     position:fixed tira #side do fluxo flex, então #map-wrap (flex:1)
+     preenche 100%. 100dvh evita corte pela barra de URL do navegador. */
+  #main{height:calc(100dvh - 44px)}
+  #side{position:fixed;top:44px;right:0;bottom:0;width:min(340px,86vw);transform:translateX(102%);transition:transform .28s ease;z-index:1100;box-shadow:-8px 0 24px rgba(0,0,0,.45)}
+  #side.open{transform:translateX(0)}
+  #drawer-backdrop{position:fixed;top:44px;left:0;right:0;bottom:0;background:rgba(1,4,9,.5);z-index:1050}
+  #drawer-backdrop.show{display:block}
+
+  /* Alvos de toque maiores */
+  .step-btn{width:34px;height:34px;font-size:19px}
+  .slider-row input[type=range]{height:6px}
+  .chip{padding:6px 12px}
+  .grid-btn{padding:10px 6px}
+  .sec{padding:14px}
+  .exp-sec{padding:10px 4px}
+  #btn-exp{padding:12px}
+
+  /* Overlays do mapa: sem overflow horizontal, texto pode quebrar */
+  #hint{max-width:calc(100vw - 20px);white-space:normal;text-align:center;font-size:11px;padding:6px 12px}
+  #to-prompt{max-width:calc(100vw - 20px);white-space:normal;text-align:center}
+  #info-card{min-width:0;padding:8px 10px}
+  #flight-legend #legend-box{min-width:0}
+  #ic-wrap-toggle{width:32px;height:32px;top:-20px;right:-20px;font-size:15px}
+
+  /* Painel de elevação compacto */
+  #elev-panel{padding:8px 10px 4px}
+  #elev-hdr{flex-wrap:wrap;gap:6px 10px}
+  #elev-meta{margin-left:0;font-size:11px}
+  #elev-src{margin-left:0}
+  #elev-legend{gap:10px;font-size:10px}
+  #elev-handle{width:44px;height:26px;top:-18px;font-size:13px}
+}
 </style>
 </head>
 <body>
 <div id="hdr">
-  <span class="logo">GeoWay</span><span class="logo-s">1.1 · Waypoints DJI</span>
+  <button id="drawer-toggle" onclick="toggleDrawer()" aria-label="Abrir ajustes" title="Ajustes">☰</button>
+  <span class="logo">GeoWay</span><span class="logo-s">1.2 · Waypoints DJI</span>
   <div class="hdr-r">
     <span class="hdr-lbl">Drone:</span>
     <select class="hdr-sel" id="sel-drone">
@@ -183,28 +247,43 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
   <div id="map-wrap">
     <div id="map"></div>
 
-    <!-- Flight info card top-left -->
-    <div id="info-card">
-      <div class="ic-title">Dados do Voo</div>
-      <div class="ic-grid">
-        <div class="ic-item"><div class="ik">GSD</div><div class="iv" id="ic-gsd">—<span class="iu"> cm/px</span></div></div>
-        <div class="ic-item"><div class="ik">Espac. faixas</div><div class="iv" id="ic-sp">—<span class="iu"> m</span></div></div>
-        <div class="ic-item"><div class="ik">Fotos est.</div><div class="iv" id="ic-ph">—</div></div>
-        <div class="ic-item"><div class="ik">Passo foto</div><div class="iv" id="ic-step">—<span class="iu"> m</span></div></div>
-        <div class="ic-item ic-full"><div class="ik">Vel. máx recomendada</div><div class="iv" id="ic-vmax">—</div></div>
-        <div class="ic-item ic-full"><div class="ik">Distancia</div><div class="iv" id="ic-di">—</div></div>
-        <div class="ic-item ic-full">
-          <div class="ik">Tempo de voo</div>
-          <div id="ic-times">
-            <div class="t-row"><span class="t-lbl">↑ Subida + trânsito</span><span class="t-val" id="ic-tt">—</span></div>
-            <div class="t-row"><span class="t-lbl">✈ Missão (WP0→fim)</span><span class="t-val" id="ic-tm">—</span></div>
-            <div class="t-row"><span class="t-lbl">↓ RTH + pouso</span><span class="t-val" id="ic-tr">—</span></div>
-            <div class="t-sep"></div>
-            <div class="t-row t-total"><span class="t-lbl">Voo total</span><span class="t-val" id="ic-ti">—</span></div>
+    <!-- Grupo: card de dados + legenda (topo-esquerda) -->
+    <div id="ic-wrap">
+      <button id="ic-wrap-toggle" onclick="toggleICWrap()" title="Recolher/expandir">◂</button>
+      <div id="ic-scroll">
+        <div id="info-card">
+          <div class="ic-title">Dados do Voo</div>
+          <div class="ic-grid" id="ic-grid">
+            <div class="ic-item"><div class="ik">GSD</div><div class="iv" id="ic-gsd">—<span class="iu"> cm/px</span></div></div>
+            <div class="ic-item"><div class="ik">Espac. faixas</div><div class="iv" id="ic-sp">—<span class="iu"> m</span></div></div>
+            <div class="ic-item"><div class="ik">Fotos est.</div><div class="iv" id="ic-ph">—</div></div>
+            <div class="ic-item"><div class="ik">Passo foto</div><div class="iv" id="ic-step">—<span class="iu"> m</span></div></div>
+            <div class="ic-item ic-full"><div class="ik">Vel. máx recomendada</div><div class="iv" id="ic-vmax">—</div></div>
+            <div class="ic-item ic-full"><div class="ik">Distancia</div><div class="iv" id="ic-di">—</div></div>
+            <div class="ic-item ic-full">
+              <div class="ik">Tempo de voo</div>
+              <div id="ic-times">
+                <div class="t-row"><span class="t-lbl">↑ Subida + trânsito</span><span class="t-val" id="ic-tt">—</span></div>
+                <div class="t-row"><span class="t-lbl">✈ Missão (WP0→fim)</span><span class="t-val" id="ic-tm">—</span></div>
+                <div class="t-row"><span class="t-lbl">↓ RTH + pouso</span><span class="t-val" id="ic-tr">—</span></div>
+                <div class="t-sep"></div>
+                <div class="t-row t-total"><span class="t-lbl">Voo total</span><span class="t-val" id="ic-ti">—</span></div>
+              </div>
+            </div>
+            <div class="ic-item ic-full"><div class="ik">Area</div><div class="iv" id="ic-area">—</div></div>
+            <div class="ic-item ic-full"><div class="ik">Armazenamento</div><div class="iv" id="ic-st">—</div></div>
           </div>
         </div>
-        <div class="ic-item ic-full"><div class="ik">Area</div><div class="iv" id="ic-area">—</div></div>
-        <div class="ic-item ic-full"><div class="ik">Armazenamento</div><div class="iv" id="ic-st">—</div></div>
+
+        <!-- FLIGHT LEGEND -->
+        <div id="flight-legend" style="display:none">
+          <div style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:8px;padding:7px 12px;min-width:190px" id="legend-box">
+            <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8b949e;margin-bottom:7px">Legenda</div>
+            <div style="display:flex;flex-direction:column;gap:5px" id="legend-content">
+              <!-- filled dynamically -->
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -217,21 +296,12 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
       <option value="ghyb">Google Híbrido</option>
     </select>
 
-    <!-- FLIGHT LEGEND -->
-    <div id="flight-legend" style="position:absolute;top:10px;left:10px;z-index:900;margin-top:0;display:none">
-      <div style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:8px;padding:7px 12px;min-width:190px" id="legend-box">
-        <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8b949e;margin-bottom:7px">Legenda</div>
-        <div style="display:flex;flex-direction:column;gap:5px" id="legend-content">
-          <!-- filled dynamically -->
-        </div>
-      </div>
-    </div>
-
     <div id="hint">Use Retangulo ou Poligono (canto sup. direito) para desenhar a area de voo</div>
     <div id="to-prompt">📍 Clique no mapa para definir o ponto de decolagem</div>
 
     <!-- Elevation profile bottom -->
     <div id="elev-panel">
+      <button id="elev-handle" onclick="toggleElevCollapse()" title="Recolher/expandir perfil">▾</button>
       <div id="elev-hdr">
         <span id="elev-title">Perfil de Elevacao</span>
         <div id="elev-legend">
@@ -355,6 +425,8 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
   </div>
 </div>
 
+<div id="drawer-backdrop" onclick="toggleDrawer(false)"></div>
+
 <div id="custom-drone-modal" onclick="if(event.target===this)toggleCustomDrone()" style="display:none;position:fixed;inset:0;z-index:2050;background:rgba(1,4,9,.72);align-items:center;justify-content:center">
   <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;max-width:340px;width:88%;padding:18px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -435,12 +507,27 @@ const DR={
 // ── MAP ──────────────────────────────────────────────────────────────────────
 const map=L.map('map',{zoomControl:false}).setView([0,0],2);
 L.control.zoom({position:'topright'}).addTo(map);
+// Sem `timeout` explícito, getCurrentPosition usa timeout:Infinity por padrão.
+// Em navegadores embutidos (WhatsApp/Instagram/Facebook in-app browser) ou em
+// contexto não-seguro, o pedido de permissão pode nunca aparecer e NENHUM dos
+// dois callbacks é chamado — o app trava na tela de espera (mapa em [0,0]).
+// A rede de segurança abaixo (independente da própria API) garante que o app
+// sempre destrava após alguns segundos, mesmo nesse cenário.
+let _geoSettled=false;
+function _geoFallback(){
+  if(_geoSettled)return;
+  _geoSettled=true;
+  map.setView([-23.15,-47.1],15);
+  showDisclaimer();
+}
 if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(
-    p=>{map.setView([p.coords.latitude,p.coords.longitude],15);showDisclaimer();},
-    ()=>{map.setView([-23.15,-47.1],15);showDisclaimer();}
+    p=>{if(_geoSettled)return;_geoSettled=true;map.setView([p.coords.latitude,p.coords.longitude],15);showDisclaimer();},
+    _geoFallback,
+    {enableHighAccuracy:false,timeout:8000,maximumAge:60000}
   );
-} else {map.setView([-23.15,-47.1],15);showDisclaimer();}
+  setTimeout(_geoFallback,9000);
+} else {_geoFallback();}
 function showDisclaimer(){document.getElementById('disclaimer-modal').style.display='flex';}
 
 // Nota (zoom): as camadas precisam de maxNativeZoom. O servidor Esri
@@ -514,6 +601,7 @@ map.on(L.Draw.Event.CREATED,e=>{
   polyPts=extractPts(e.layer);
   document.getElementById('hint').style.opacity='0';
   document.getElementById('btn-clr').style.display='block';
+  syncICWrapBtn(true);
   sched();
 });
 map.on(L.Draw.Event.EDITED,()=>{const ls=drawnFG.getLayers();if(ls.length){polyPts=extractPts(ls[0]);sched();}});
@@ -1157,16 +1245,43 @@ async function calcElev(){
 function updateTileBtnPosition(){
   const panel=document.getElementById('elev-panel');
   const tsw=document.getElementById('tile-sw');
-  if(panel.style.display!=='none'){
-    const h=panel.offsetHeight;
-    tsw.style.bottom=(h+8)+'px';
-  } else {
-    tsw.style.bottom='30px';
-  }
+  const icScroll=document.getElementById('ic-scroll');
+  const open=panel.style.display!=='none';
+  const h=open?panel.offsetHeight:0;
+  tsw.style.bottom=(open?h+8:30)+'px';
+  // Evita que o grupo card+legenda (topo-esquerda) se sobreponha ao perfil de
+  // elevação (rodapé) em telas pequenas: o teto de altura do grupo encolhe
+  // conforme o perfil ocupa espaço; se ainda assim não couber, rola internamente
+  // (overflow-y:auto em #ic-scroll) em vez de vazar sobre o perfil. O botão de
+  // recolher (#ic-wrap-toggle) fica FORA do #ic-scroll de propósito, para não
+  // ser cortado pelo overflow.
+  if(icScroll) icScroll.style.maxHeight='calc(100% - '+(h+20)+'px)';
 }
 function closeProfile(){
-  document.getElementById('elev-panel').style.display='none';
+  const panel=document.getElementById('elev-panel');
+  panel.style.display='none';
+  panel.classList.remove('elev-collapsed');
+  document.getElementById('elev-handle').innerHTML='▾';
   updateTileBtnPosition();
+}
+function toggleElevCollapse(){
+  const panel=document.getElementById('elev-panel');
+  const collapsed=panel.classList.toggle('elev-collapsed');
+  document.getElementById('elev-handle').innerHTML=collapsed?'▴':'▾';
+  setTimeout(updateTileBtnPosition,50);
+}
+function toggleICWrap(){
+  const wrap=document.getElementById('ic-wrap');
+  const collapsed=wrap.classList.toggle('ic-collapsed');
+  document.getElementById('ic-wrap-toggle').innerHTML=collapsed?'▸':'◂';
+}
+// Mostra o botão do grupo card+legenda apenas quando há algo para
+// recolher/reabrir (uma área desenhada) — ou sempre, se já estiver recolhido,
+// para permitir reabrir.
+function syncICWrapBtn(hasContent){
+  const wrap=document.getElementById('ic-wrap');
+  const btn=document.getElementById('ic-wrap-toggle');
+  btn.style.display=(hasContent||wrap.classList.contains('ic-collapsed'))?'flex':'none';
 }
 
 // ── DRAW PROFILE ─────────────────────────────────────────────────────────────
@@ -1176,7 +1291,7 @@ function drawProfile(elevs,smoothed,alt,profPts,profDists,toElev){
   setTimeout(updateTileBtnPosition,50);
 
   const cv=document.getElementById('elev-cv');
-  const W=cv.parentElement.offsetWidth;const H=160;
+  const W=cv.parentElement.offsetWidth;const H=profileHeight();
   cv.width=W;cv.height=H;
   const ctx=cv.getContext('2d');
   const valid=elevs.filter(x=>x!=null);
@@ -1251,12 +1366,12 @@ function setupHover(){
   const cv=document.getElementById('elev-cv');
   const vl=document.getElementById('elev-vline');
   const tt=document.getElementById('elev-tip');
-  cv.onmousemove=function(e){
+  function _profMoveAt(clientX){
     if(!elevData_)return;
     const {elevs,smoothed,alt,profPts,toElev,H}=elevData_;
     // Recompute W live from canvas actual width
     const cW=cv.offsetWidth;
-    const rect=cv.getBoundingClientRect(),x=e.clientX-rect.left;
+    const rect=cv.getBoundingClientRect(),x=clientX-rect.left;
     // Usa os mesmos offsets do desenho (sx: 42 / W-48) —
     // o que deslocava o índice sob o cursor em relação à curva desenhada
     const frac=Math.max(0,Math.min(1,(x-42)/Math.max(1,cW-48)));
@@ -1271,8 +1386,14 @@ function setupHover(){
     tt.innerHTML=`Terreno: <b>${el.toFixed(0)}m</b> &nbsp; AGL terreno: <b>${aglLocal}m</b> &nbsp; H/decolagem: <b>${hAboveTo}m</b> &nbsp; <span style="color:#a0aab8">${(profDist(idx)/1000).toFixed(2)}km</span>`;
     if(hoverMk)map.removeLayer(hoverMk);
     hoverMk=L.circleMarker([profPts[idx].lat,profPts[idx].lng],{radius:6,color:'#f9e2af',fillColor:'#f9e2af',fillOpacity:.9,weight:2,interactive:false}).addTo(map);
-  };
-  cv.onmouseleave=function(){vl.style.opacity='0';tt.style.display='none';if(hoverMk){map.removeLayer(hoverMk);hoverMk=null;}};
+  }
+  function _profHide(){vl.style.opacity='0';tt.style.display='none';if(hoverMk){map.removeLayer(hoverMk);hoverMk=null;}}
+  cv.onmousemove=e=>_profMoveAt(e.clientX);
+  cv.onmouseleave=_profHide;
+  cv.ontouchstart=e=>{if(e.touches[0]){_profMoveAt(e.touches[0].clientX);e.preventDefault();}};
+  cv.ontouchmove=e=>{if(e.touches[0]){_profMoveAt(e.touches[0].clientX);e.preventDefault();}};
+  cv.ontouchend=_profHide;
+  cv.ontouchcancel=_profHide;
 }
 
 function profDist(idx){
@@ -1545,13 +1666,6 @@ function updateLegend(){
   if(!strips_||!strips_.length){legend.style.display='none';return;}
   legend.style.display='block';
 
-  // Position below info-card
-  const card=document.getElementById('info-card');
-  if(card&&card.style.display!=='none'){
-    legend.style.top=(card.offsetTop+card.offsetHeight+6)+'px';
-    legend.style.left=card.style.left||'10px';
-  }
-
   const toLabel=toPt?'Decolagem definida':'Decolagem não definida';
   const toLineRows=toPt?`
       <div style="display:flex;align-items:center;gap:8px">
@@ -1596,6 +1710,9 @@ function clearAll(){
   document.getElementById('btn-elev').style.display='none';
   document.getElementById('info-card').style.display='none';
   document.getElementById('flight-legend').style.display='none';
+  document.getElementById('ic-wrap').classList.remove('ic-collapsed');
+  document.getElementById('ic-wrap-toggle').innerHTML='◂';
+  syncICWrapBtn(false);
   closeProfile();
   endWaitTO();
   setS('Desenhe a area de voo no mapa','');
@@ -1603,6 +1720,41 @@ function clearAll(){
 }
 function setS(m,t){const el=document.getElementById('status');el.className='status'+(t?' '+t:'');el.innerHTML=m;}
 function setP(p){document.getElementById('prog').style.display='block';document.getElementById('prog-fill').style.width=p+'%';}
+
+// ── GAVETA LATERAL (mobile) ───────────────────────────────────────────────────
+// Em telas ≤768px o #side é uma gaveta fixa fora da tela; abrir/fechar apenas
+// alterna classes. Em desktop o botão está oculto e estas classes são ignoradas
+// pelo CSS (as regras de gaveta vivem dentro do @media), então é inócuo.
+function toggleDrawer(force){
+  const side=document.getElementById('side');
+  const bd=document.getElementById('drawer-backdrop');
+  const btn=document.getElementById('drawer-toggle');
+  const open=(force===true)||(force!==false&&!side.classList.contains('open'));
+  side.classList.toggle('open',open);
+  bd.classList.toggle('show',open);
+  if(btn)btn.innerHTML=open?'✕':'☰';
+}
+
+// Altura do canvas do perfil: menor no celular para não engolir o mapa.
+function profileHeight(){return window.innerWidth<=768?120:160;}
+
+// Recalcula o tamanho do mapa Leaflet e redesenha o perfil quando a viewport
+// muda (rotação de tela, barra de URL, redimensionamento de janela). O mapa
+// não sabe sozinho que #map-wrap mudou de largura ao cruzar o breakpoint.
+let _rzT=null;
+function _onViewportResize(){
+  clearTimeout(_rzT);
+  _rzT=setTimeout(()=>{
+    try{if(map&&map.invalidateSize)map.invalidateSize({animate:false});}catch{}
+    updateTileBtnPosition();
+    if(document.getElementById('elev-panel').style.display!=='none'&&elevData_){
+      const{elevs,smoothed,alt,profPts,profDists,toElev}=elevData_;
+      drawProfile(elevs,smoothed,alt,profPts,profDists,toElev);
+    }
+  },200);
+}
+window.addEventListener('resize',_onViewportResize);
+window.addEventListener('orientationchange',_onViewportResize);
 
 // ── CANVAS RESPONSIVO — redraw perfil ao redimensionar janela ──────────────────
 if(window.ResizeObserver){
