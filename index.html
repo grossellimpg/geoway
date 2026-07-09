@@ -1,9 +1,17 @@
+<!--
+  GeoWay — Planejador de missões fotogramétricas para drone (DJI WPML/KMZ)
+  Copyright (c) 2026 Marcos Grosselli. Todos os direitos autorais reservados.
+  O uso da ferramenta é livre e gratuito. O código-fonte, porém, não é livre:
+  não é permitida cópia, redistribuição, incorporação a outros produtos/serviços
+  ou exploração comercial do código sem autorização prévia e por escrito do autor.
+  Ver LICENSE no repositório.
+-->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GeoWay 1.0</title>
+<title>GeoWay 1.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -33,10 +41,8 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 .ic-full{grid-column:1/-1}
 
 /* TILE SWITCHER — bottom right, above profile when open */
-#tile-sw{position:absolute;bottom:30px;right:10px;z-index:900;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;gap:3px;max-width:70vw;background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:7px;padding:4px;transition:bottom .25s}
-.tbtn{background:transparent;border:none;color:#b0bac8;font-size:12px;font-weight:500;cursor:pointer;padding:4px 10px;border-radius:4px;transition:all .15s;white-space:nowrap}
-.tbtn:hover{color:#e6edf3;background:#21262d}
-.tbtn.on{background:#21262d;color:#58a6ff;font-weight:600}
+#tile-sw{position:absolute;bottom:30px;right:10px;z-index:900;background:#1e2433;color:#c9d1d9;border:1px solid #30363d;border-radius:7px;padding:6px 8px;font-size:12px;font-weight:500;cursor:pointer;transition:bottom .25s;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+#tile-sw:hover{background:#2d333d}
 
 /* HINT */
 #hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(22,27,34,.94);border:1px solid #30363d;border-radius:7px;padding:7px 16px;font-size:12px;color:#c9d1d9;z-index:800;pointer-events:none;white-space:nowrap;transition:opacity .3s}
@@ -114,6 +120,7 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 /* Zoom controls */
 .leaflet-control-zoom a{background:#1e2433!important;color:#c9d1d9!important;border-color:#30363d!important;font-size:16px!important;font-weight:300!important}
 .leaflet-control-zoom a:hover{background:#2d333d!important;color:#e6edf3!important}
+.geoway-info-btn:hover{background:#2d333d!important;color:#e6edf3!important}
 .leaflet-bar{border:1px solid #30363d!important;box-shadow:0 2px 8px rgba(0,0,0,.4)!important}
 /* Draw toolbar buttons */
 .leaflet-draw-toolbar a{background-color:#1e2433!important;border-bottom:1px solid #30363d!important}
@@ -155,7 +162,7 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 </head>
 <body>
 <div id="hdr">
-  <span class="logo">GeoWay</span><span class="logo-s">1.0 · Waypoints DJI</span>
+  <span class="logo">GeoWay</span><span class="logo-s">1.1 · Waypoints DJI</span>
   <div class="hdr-r">
     <span class="hdr-lbl">Drone:</span>
     <select class="hdr-sel" id="sel-drone">
@@ -163,8 +170,12 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
       <option value="mini4pro">DJI Mini 4 Pro</option>
       <option value="mini3pro">DJI Mini 3 Pro</option>
       <option value="mini3">DJI Mini 3 Standard</option>
+      <option value="mini5pro">DJI Mini 5 Pro</option>
+      <option value="mavic3e">DJI Mavic 3E (obturador mecânico)</option>
+      <option value="air3s">DJI Air 3S (KMZ ainda não importável no DJI Fly)</option>
       <option value="custom">Personalizado</option>
     </select>
+    <span id="custom-edit-link" onclick="toggleCustomDrone()" style="display:none;font-size:11px;color:#58a6ff;cursor:pointer;white-space:nowrap">✎ parâmetros</span>
   </div>
 </div>
 
@@ -198,13 +209,13 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
     </div>
 
     <!-- Tile switcher bottom-right -->
-    <div id="tile-sw">
-      <button class="tbtn on" id="tb-osm" onclick="setTile('osm')">🗺 Mapa</button>
-      <button class="tbtn" id="tb-sat" onclick="setTile('sat')">🛰 Satélite</button>
-      <button class="tbtn" id="tb-hyb" onclick="setTile('hyb')">🏙 Híbrido</button>
-      <button class="tbtn" id="tb-gsat" onclick="setTile('gsat')">🛰 Google</button>
-      <button class="tbtn" id="tb-ghyb" onclick="setTile('ghyb')">🏙 Google H</button>
-    </div>
+    <select id="tile-sw" onchange="setTile(this.value)">
+      <option value="osm">Mapa</option>
+      <option value="sat">Satélite</option>
+      <option value="hyb">Híbrido</option>
+      <option value="gsat">Google Satélite</option>
+      <option value="ghyb">Google Híbrido</option>
+    </select>
 
     <!-- FLIGHT LEGEND -->
     <div id="flight-legend" style="position:absolute;top:10px;left:10px;z-index:900;margin-top:0;display:none">
@@ -287,7 +298,7 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
           <input type="range" id="r-cam" min="0" max="90" step="1" value="90">
           <button class="step-btn" onclick="step('r-cam',1)">+</button>
         </div>
-        <div style="font-size:11px;color:#484f58;margin-top:-6px;margin-bottom:2px">0°=horizonte · 90°=nadir</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:-6px;margin-bottom:2px">0°=horizonte · 90°=nadir</div>
       </div>
 
       <div class="sec">
@@ -326,20 +337,6 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
           <div style="font-size:10px;color:#e3b341;margin-top:3px">Voo contínuo, mas limita a velocidade ao máximo sem blur (sem parar em cada ponto)</div>
           <div style="font-size:10px;color:#8b949e;margin-top:2px">Reduz motion blur / rolling shutter · impacto pequeno no tempo de voo</div>
         </div>
-        <div id="cdrone" style="display:none;margin-top:10px">
-          <div class="lbl" style="margin-bottom:4px">Sensor px (larg × alt)</div>
-          <div style="display:flex;gap:6px;margin-bottom:7px">
-            <input class="finp" type="number" id="c-sw" value="4032" style="margin:0">
-            <input class="finp" type="number" id="c-sh" value="3024" style="margin:0">
-          </div>
-          <div class="lbl" style="margin-bottom:4px">Sensor fisico mm (larg × alt)</div>
-          <div style="display:flex;gap:6px;margin-bottom:7px">
-            <input class="finp" type="number" id="c-swmm" value="9.032" step="0.001" style="margin:0">
-            <input class="finp" type="number" id="c-shmm" value="6.774" step="0.001" style="margin:0">
-          </div>
-          <div class="lbl" style="margin-bottom:4px">Distancia focal (mm)</div>
-          <input class="finp" type="number" id="c-f" value="6.72" step="0.01">
-        </div>
       </div>
     </div>
 
@@ -353,6 +350,59 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
         <button id="btn-exp-txt" class="exp-sec" disabled onclick="exportTXT()">📄 TXT UTM</button>
       </div>
       <button id="btn-clr" onclick="clearAll()" style="display:none">Limpar area</button>
+      <div style="text-align:center;font-size:12px;color:#484f58;margin-top:8px">© 2026 Marcos Grosselli</div>
+    </div>
+  </div>
+</div>
+
+<div id="custom-drone-modal" onclick="if(event.target===this)toggleCustomDrone()" style="display:none;position:fixed;inset:0;z-index:2050;background:rgba(1,4,9,.72);align-items:center;justify-content:center">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;max-width:340px;width:88%;padding:18px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:#e6edf3">Drone personalizado</div>
+      <span onclick="toggleCustomDrone()" style="cursor:pointer;color:#8b949e;font-size:18px;line-height:1;padding:2px 4px">×</span>
+    </div>
+    <div class="lbl" style="margin-bottom:4px">Sensor px (larg × alt)</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <input class="finp" type="number" id="c-sw" value="4032" style="margin:0">
+      <input class="finp" type="number" id="c-sh" value="3024" style="margin:0">
+    </div>
+    <div class="lbl" style="margin-bottom:4px">Sensor fisico mm (larg × alt)</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <input class="finp" type="number" id="c-swmm" value="9.032" step="0.001" style="margin:0">
+      <input class="finp" type="number" id="c-shmm" value="6.774" step="0.001" style="margin:0">
+    </div>
+    <div class="lbl" style="margin-bottom:4px">Distancia focal (mm)</div>
+    <input class="finp" type="number" id="c-f" value="6.72" step="0.01">
+    <button onclick="toggleCustomDrone()" style="width:100%;margin-top:14px;background:#238636;color:#fff;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">OK</button>
+  </div>
+</div>
+
+<div id="disclaimer-modal" onclick="if(event.target===this)closeDisclaimer()" style="display:none;position:fixed;inset:0;z-index:2100;background:rgba(1,4,9,.72);align-items:center;justify-content:center">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;max-width:440px;width:88%;padding:18px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:16px;font-weight:700;color:#e6edf3">Aviso</div>
+      <span onclick="closeDisclaimer()" style="cursor:pointer;color:#8b949e;font-size:18px;line-height:1;padding:2px 4px">×</span>
+    </div>
+    <div style="font-size:12px;color:#c9d1d9;line-height:1.55;text-align:justify;text-align-last:left">
+      <p style="margin:0 0 10px">GeoWay é uma ferramenta gratuita e testada de apoio ao planejamento de missões. Sempre revise a missão antes do voo, respeite as normas locais e as condições do ambiente, e opere seu drone com segurança. O uso é de responsabilidade exclusiva do piloto, não nos responsabilizamos por danos, perdas, acidentes, falhas de equipamento ou qualquer consequência do uso dos arquivos gerados.</p>
+      <p style="margin:0 0 10px">O uso da ferramenta é livre e gratuito, mas o projeto (código-fonte) é protegido por direitos autorais, cópia, redistribuição ou incorporação a outros produtos/serviços não são permitidas sem autorização do autor.</p>
+    </div>
+    <button onclick="closeDisclaimer()" style="width:100%;margin-top:14px;background:#238636;color:#fff;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">Entendi</button>
+  </div>
+</div>
+
+<div id="info-modal" onclick="if(event.target===this)toggleInfo()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(1,4,9,.72);align-items:center;justify-content:center">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;max-width:480px;width:88%;max-height:82vh;overflow-y:auto;padding:18px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:700;color:#e6edf3">Como usar o GeoWay</div>
+      <span onclick="toggleInfo()" style="cursor:pointer;color:#8b949e;font-size:18px;line-height:1;padding:2px 4px">×</span>
+    </div>
+    <div style="font-size:12px;color:#c9d1d9;line-height:1.55">
+      <p style="margin:0 0 10px"><b>Fluxo básico:</b> desenhe a área com Retângulo ou Polígono (canto sup. direito do mapa) → ajuste altitude, sobreposição e ângulo de câmera → clique no mapa para marcar o ponto de decolagem → exporte o KMZ e carregue no DJI Fly.</p>
+      <p style="margin:0 0 10px"><b>Ortofoto (mapeamento 2D):</b> câmera em nadir (90°), grade simples, sobreposição frontal ~75–80% e lateral ~65–70%.</p>
+      <p style="margin:0 0 10px"><b>Modelo 3D:</b> grade cruzada (Cruz/3D), sobreposição mais alta (frontal ~80–85%, lateral ~70–80%), e avalie inclinar a câmera entre 80°–85° para capturar fachadas, combine com pelo menos uma passada em nadir para melhor reconstrução.</p>
+      <p style="margin:0 0 10px"><b>Terreno:</b> o acompanhamento de relevo usa SRTM (~30m); em áreas urbanas o modelo pode superestimar levemente a altura do terreno, confira a altura AGL esperada antes de voar perto de obstáculos.</p>
+      <p style="margin:0"><b>Antes de voar:</b> confirme que o KMZ abre corretamente no DJI Fly e mostra a aeronave/altura esperada, verifique normas locais e espaço aéreo, condições de vento e visibilidade, e mantenha o drone sempre à vista.</p>
     </div>
   </div>
 </div>
@@ -367,20 +417,30 @@ const DEG=Math.PI/180,RE=6371000;
 // GSD validado: 2.00cm/px a 60m → bate com Metashape 2.04cm/px ✓
 // FOV diagonal 80.1° → bate com DJI declarado 82.1° ✓
 // Mini 3 Pro / Mini 3: parâmetros estimados — validar com EXIF real de saída
+// Parâmetros de sensor confirmados pela DJI quando possível; enum de drone/payload não é
+// documentado oficialmente para a linha de consumo (só a enterprise, ex. M3E, tem tabela
+// pública) — valide sempre no DJI Fly antes de voar.
 const DR={
-  litox1: {sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.72,rs:12,en:92,pay:53}, // validado
-  mini4pro:{sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.72,rs:12,en:67,pay:53}, // validado
-  mini3pro:{sw:4056,sh:3040,swmm:9.085,shmm:6.810,f:6.33,rs:11,en:58,pay:53}, // ESTIMADO — validar EXIF
-  mini3:  {sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.60,rs:12,en:60,pay:53},  // ESTIMADO — validar EXIF
-  custom: {sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.72,rs:12,en:67,pay:53}
+  litox1:  {sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.72,rs:12,en:92,pay:53},
+  mini4pro:{sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.72,rs:12,en:67,pay:53},
+  mini3pro:{sw:4056,sh:3040,swmm:9.085,shmm:6.810,f:6.33,rs:11,en:58,pay:53}, // sensor estimado
+  mini3:   {sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.60,rs:12,en:60,pay:53}, // sensor estimado
+  mini5pro:{sw:8192,sh:6144,swmm:13.2,shmm:9.9,f:12.1,rs:12,en:343,pay:0}, // enum confirmado em campo
+  mavic3e: {sw:5280,sh:3956,swmm:17.424,shmm:13.055,f:12.1,rs:0,en:77,pay:66}, // obturador mecânico; enum oficial DJI
+  air3s:   {sw:8192,sh:6144,swmm:13.2,shmm:9.9,f:12.1,rs:8,en:0,pay:0}, // KMZ ainda não importável no DJI Fly
+  custom:  {sw:4032,sh:3024,swmm:9.032,shmm:6.774,f:6.72,rs:12,en:67,pay:53}
 };
 
 // ── MAP ──────────────────────────────────────────────────────────────────────
 const map=L.map('map',{zoomControl:false}).setView([0,0],2);
 L.control.zoom({position:'topright'}).addTo(map);
 if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],15),()=>map.setView([-23.15,-47.1],15));
-} else map.setView([-23.15,-47.1],15);
+  navigator.geolocation.getCurrentPosition(
+    p=>{map.setView([p.coords.latitude,p.coords.longitude],15);showDisclaimer();},
+    ()=>{map.setView([-23.15,-47.1],15);showDisclaimer();}
+  );
+} else {map.setView([-23.15,-47.1],15);showDisclaimer();}
+function showDisclaimer(){document.getElementById('disclaimer-modal').style.display='flex';}
 
 // Nota (zoom): as camadas precisam de maxNativeZoom. O servidor Esri
 // (World Imagery) não possui tiles z19/z20 em boa parte do interior do Brasil →
@@ -400,14 +460,12 @@ const TL={
   ghyb:L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{maxZoom:22,maxNativeZoom:21,subdomains:['0','1','2','3'],attribution:'© Google'})
 };
 const HLBL=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:22,maxNativeZoom:19,opacity:1,attribution:'© CartoDB'});
-const TILE_IDS=['osm','sat','hyb','gsat','ghyb'];
 TL.osm.addTo(map);
 function setTile(t){
   Object.values(TL).forEach(l=>{try{map.removeLayer(l);}catch{}});
   try{map.removeLayer(HLBL);}catch{}
   TL[t].addTo(map);
   if(t==='hyb')HLBL.addTo(map);   // Esri não traz rótulos → overlay CartoDB (Google já vem com rótulos)
-  TILE_IDS.forEach(id=>{const b=document.getElementById('tb-'+id);if(b)b.classList.toggle('on',id===t);});
 }
 
 // ── LAYERS ───────────────────────────────────────────────────────────────────
@@ -425,6 +483,22 @@ const drawCtrl=new L.Control.Draw({
   edit:{featureGroup:drawnFG,edit:{selectedPathOptions:{maintainColor:true}},remove:false}
 });
 map.addControl(drawCtrl);
+
+// Botão de instruções — empilhado no mesmo canto (topright), logo abaixo da
+// barra de desenho/edição de polígono, como um controle nativo do Leaflet.
+const InfoCtrl=L.Control.extend({
+  options:{position:'topright'},
+  onAdd:function(){
+    const div=L.DomUtil.create('div','leaflet-bar');
+    const a=L.DomUtil.create('a','geoway-info-btn',div);
+    a.href='#';a.title='Instruções básicas';a.innerHTML='<b>i</b>';
+    a.style.cssText='width:30px;height:30px;line-height:30px;text-align:center;background:#1e2433;color:#c9d1d9;font-size:15px;display:block';
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.on(a,'click',L.DomEvent.stop).on(a,'click',function(){toggleInfo();});
+    return div;
+  }
+});
+map.addControl(new InfoCtrl());
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 // Nota: um único flag `busy` compartilhado entre exportação e
@@ -549,6 +623,14 @@ let softMode=false;
 // Tempo de estabilização do gimbal declarado APENAS no WP0 (garante nadir antes
 // da 1ª foto — ver makeWpXml). Não é pausa por waypoint.
 const GIMBAL_SETTLE=2.5;   // s
+function closeDisclaimer(){
+  document.getElementById('disclaimer-modal').style.display='none';
+}
+function toggleInfo(){
+  const m=document.getElementById('info-modal');
+  const show=m.style.display==='none';
+  m.style.display=show?'flex':'none';
+}
 function toggleSoft(){
   softMode=!softMode;
   const tog=document.getElementById('hv-toggle');
@@ -593,7 +675,16 @@ const SLIDERS=[
 ];
 SLIDERS.forEach(([r,v,f])=>{document.getElementById(r).addEventListener('input',e=>{document.getElementById(v).textContent=f(+e.target.value);sched();});});
 function step(id,delta){const el=document.getElementById(id);const nv=Math.min(+el.max,Math.max(+el.min,+(+el.value+delta).toFixed(1)));el.value=nv;el.dispatchEvent(new Event('input'));}
-document.getElementById('sel-drone').addEventListener('change',e=>{document.getElementById('cdrone').style.display=e.target.value==='custom'?'block':'none';sched();});
+document.getElementById('sel-drone').addEventListener('change',e=>{
+  const isCustom=e.target.value==='custom';
+  document.getElementById('custom-edit-link').style.display=isCustom?'inline':'none';
+  if(isCustom) toggleCustomDrone(true);
+  sched();
+});
+function toggleCustomDrone(forceOpen){
+  const m=document.getElementById('custom-drone-modal');
+  m.style.display=(forceOpen||m.style.display==='none')?'flex':'none';
+}
 ['c-sw','c-sh','c-swmm','c-shmm','c-f'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',sched);});
 let gridMode='single'; // 'single' | 'double'
 let _stripLimited=false;
@@ -1036,13 +1127,20 @@ async function calcElev(){
   const validE=elevs.filter(v=>v!=null);
   const range=validE.length?Math.max(...validE)-Math.min(...validE):0;
   const rateWarn=maxRate>V_CLIMB_MAX;
+  // Altura mínima relativa à decolagem (executeHeight do KMZ). Negativa = normal
+  // quando a decolagem é no ponto mais alto do terreno da missão; apenas informativo.
+  const minRelH=alt+Math.min(...allWpts.map(p=>p.ez||0));
+  const negWarn=minRelH<=0;
 
   document.getElementById('elev-src').textContent=
     srcLabel+' · taxa vert. máx '+maxRate.toFixed(1)+'m/s'+(rateWarn?' \u26a0':'')+' · '+uniq+'/'+allWpts.length+' alturas únicas';
 
   elevData_={elevs,smoothed,alt,profPts,profDists,toElev,aglMin,aglMax,sig:elevSig(allWpts,alt)};
   drawProfile(elevs,smoothed,alt,profPts,profDists,toElev);
-  setS('Perfil OK · '+DEMLBL+' · \u0394terreno '+range.toFixed(0)+'m · taxa vert. máx '+maxRate.toFixed(1)+'m/s'+(rateWarn?' \u26a0 acima de '+V_CLIMB_MAX+'m/s no WP'+maxRateAt:''),rateWarn?'warn':'ok');
+  setS('Perfil OK · '+DEMLBL+' · \u0394terreno '+range.toFixed(0)+'m · taxa vert. máx '+maxRate.toFixed(1)+'m/s'
+    +(rateWarn?' \u26a0 acima de '+V_CLIMB_MAX+'m/s no WP'+maxRateAt:'')
+    +(negWarn?' \u26a0 altura mín. rel. à decolagem '+minRelH.toFixed(0)+'m — confira se a decolagem está no ponto mais alto do terreno':''),
+    (rateWarn||negWarn)?'warn':'ok');
   setP(100);setTimeout(()=>document.getElementById('prog').style.display='none',500);
   }catch(e){
     setS('Erro no perfil de elevação: '+e.message,'err');
@@ -1184,10 +1282,13 @@ function profDist(idx){
 // ── EXPORT ───────────────────────────────────────────────────────────────────
 function validateMission(allPts, alt, spd){
   const errs=[];
-  // Height must be positive
+  // Altura relativa à decolagem (executeHeight/relativeToStartPoint) PODE ser negativa
+  // sem risco ao voo: o AGL real sobre o terreno local permanece constante (=alt) no
+  // modo terrain-following — negativo aqui só significa que aquele ponto está abaixo
+  // da cota da decolagem (ex.: decolagem no topo de um morro). Não bloqueia export;
+  // o aviso correspondente aparece no status do perfil de elevação (calcElev).
   allPts.forEach((p,i)=>{
     const h=alt+(p.ez||0);
-    if(h<=0) errs.push(`Waypoint ${i}: altura negativa (${h.toFixed(1)}m) — ponto de decolagem muito alto?`);
     if(h>400) errs.push(`Waypoint ${i}: altura ${h.toFixed(1)}m acima do limite legal (400m)`);
   });
   // Speed
@@ -1413,18 +1514,22 @@ async function exportTXT(){
     const m=await prepareExport();
     if(!m){setP(0);document.getElementById('prog').style.display='none';return;}
     setP(80);
-    const rows=['Ponto,X,Y,AGL'];
+    const toLine=(m.tf==='terrain'&&elevData_&&elevData_.toElev!=null)
+      ?`Altitude do ponto de decolagem (ASL, SRTM): ${elevData_.toElev.toFixed(2)} m`
+      :'Altitude do ponto de decolagem: nao disponivel (sem acompanhamento de terreno)';
+    const rows=[toLine,'Ponto,X,Y,Altura relativa a decolagem (m)'];
     let zone=null,south=true;
     m.allPts.forEach((p,i)=>{
       const u=llToUtm(p.lat,p.lng);
       if(zone===null){zone=u.zone;south=u.south;}
-      const agl=m.alt;   // altura sobre o solo (constante no seguimento de terreno)
-      rows.push(`${i+1},${u.x.toFixed(3)},${u.y.toFixed(3)},${agl.toFixed(3)}`);
+      const hrel=m.alt+(p.ez||0);   // altura relativa ao ponto de decolagem (= executeHeight do KMZ) — varia com o terreno
+      rows.push(`${i+1},${u.x.toFixed(3)},${u.y.toFixed(3)},${hrel.toFixed(3)}`);
     });
     dl(new Blob([rows.join('\r\n')+'\r\n'],{type:'text/plain'}),'geoway_utm_'+m.ts+'.txt');
     const epsg=(south&&zone>=17&&zone<=25)?' · EPSG:'+(31960+zone)+' (SIRGAS 2000)':'';
     setP(100);setTimeout(()=>document.getElementById('prog').style.display='none',500);
-    setS(`TXT UTM exportado — Zona ${zone}${south?'S':'N'}${epsg} · coluna AGL = ${m.alt} m`,'ok');
+    const modeMsg=(m.tf==='terrain')?'altura relativa à decolagem (acompanha terreno)':'altura relativa à decolagem — FIXA (ligue "Acompanhar terreno" para variar com o relevo)';
+    setS(`TXT UTM exportado — Zona ${zone}${south?'S':'N'}${epsg} · ${modeMsg}`,'ok');
   }catch(e){setS('Erro: '+e.message,'err');console.error('exportTXT error:',e);}
   finally{setExpBusy(false);}
 }
