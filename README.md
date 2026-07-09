@@ -21,7 +21,7 @@ responsabiliza por missões executadas a partir dos arquivos exportados.
 
 ## Uso e direitos autorais
 
-Copyright (c) 2026 Marcos Grosselli. Todos os direitos reservados.
+Copyright (c) 2026 Marcos Grosselli | Geoway. Todos os direitos reservados.
 
 **O uso da ferramenta é livre e gratuito** — qualquer pessoa pode usar o
 GeoWay, através do endereço oficial (GitHub Pages), para planejar e gerar
