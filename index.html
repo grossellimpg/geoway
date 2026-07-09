@@ -36,7 +36,7 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 #ic-scroll{display:flex;flex-direction:column;gap:8px;max-width:calc(100vw - 40px);overflow-y:auto}
 #ic-scroll::-webkit-scrollbar{width:3px}
 #ic-scroll::-webkit-scrollbar-thumb{background:#30363d}
-#ic-wrap-toggle{position:absolute;top:-12px;right:-12px;width:26px;height:26px;border-radius:50%;background:#1e2433;border:1px solid #30363d;color:#c9d1d9;font-size:13px;cursor:pointer;z-index:901;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+#ic-wrap-toggle{position:absolute;top:8px;right:-12px;width:26px;height:26px;border-radius:50%;background:#1e2433;border:1px solid #30363d;color:#c9d1d9;font-size:13px;cursor:pointer;z-index:901;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4)}
 #ic-wrap-toggle:hover{background:#2d333d}
 #ic-wrap.ic-collapsed #ic-scroll{display:none}
 #info-card{background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:8px;padding:10px 13px;display:none;min-width:190px}
@@ -68,7 +68,7 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
 #elev-src{font-size:10px;color:#8b949e;margin-left:8px}
 #elev-close{background:transparent;border:none;color:#8b949e;font-size:16px;cursor:pointer;padding:0 4px;line-height:1}
 #elev-close:hover{color:#f85149}
-#elev-handle{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:36px;height:20px;border-radius:6px 6px 0 0;background:#1e2433;border:1px solid #30363d;border-bottom:none;color:#c9d1d9;font-size:11px;line-height:1;cursor:pointer;z-index:851;display:flex;align-items:center;justify-content:center;box-shadow:0 -2px 6px rgba(0,0,0,.35)}
+#elev-handle{position:absolute;top:-16px;left:50%;transform:translateX(-50%);width:34px;height:16px;border-radius:6px 6px 0 0;background:#1e2433;border:1px solid #30363d;border-bottom:none;color:#c9d1d9;font-size:14px;line-height:1;cursor:pointer;z-index:851;display:flex;align-items:center;justify-content:center;box-shadow:0 -2px 6px rgba(0,0,0,.35)}
 #elev-handle:hover{background:#2d333d}
 #elev-panel.elev-collapsed{padding-top:0;padding-bottom:0}
 #elev-panel.elev-collapsed>#elev-hdr,#elev-panel.elev-collapsed>#elev-wrap{display:none}
@@ -211,7 +211,7 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
   #to-prompt{max-width:calc(100vw - 20px);white-space:normal;text-align:center}
   #info-card{min-width:0;padding:8px 10px}
   #flight-legend #legend-box{min-width:0}
-  #ic-wrap-toggle{width:32px;height:32px;top:-20px;right:-20px;font-size:15px}
+  #ic-wrap-toggle{width:32px;height:32px;top:8px;right:-12px;font-size:15px}
 
   /* Painel de elevação compacto */
   #elev-panel{padding:8px 10px 4px}
@@ -392,7 +392,7 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
             </div>
           </div>
           <select id="sel-dem" onchange="onDemChange()" style="width:100%;margin-top:6px;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:6px;font-size:12px;cursor:pointer">
-            <option value="aws30m">SRTM GL1 ~30 m — AWS Terrain Tiles</option>
+            <option value="aws30m">SRTM ~30 m — AWS Terrain Tiles</option>
           </select>
           <div style="font-size:10px;color:#8b949e;margin-top:3px">Modelo de elevação · amostragem direta no waypoint</div>
           <input type="hidden" id="sel-tf" value="fixed">
@@ -404,7 +404,6 @@ html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6edf3}
               <div id="hv-knob" style="width:18px;height:18px;border-radius:50%;background:#484f58;position:absolute;top:2px;left:3px;transition:all .2s"></div>
             </div>
           </div>
-          <div style="font-size:10px;color:#e3b341;margin-top:3px">Voo contínuo, mas limita a velocidade ao máximo sem blur (sem parar em cada ponto)</div>
           <div style="font-size:10px;color:#8b949e;margin-top:2px">Reduz motion blur / rolling shutter · impacto pequeno no tempo de voo</div>
         </div>
       </div>
