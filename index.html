@@ -516,7 +516,7 @@ let _geoSettled=false;
 function _geoFallback(){
   if(_geoSettled)return;
   _geoSettled=true;
-  map.setView([-23.15,-47.1],15);
+  map.fitWorld();
   showDisclaimer();
 }
 if(navigator.geolocation){
